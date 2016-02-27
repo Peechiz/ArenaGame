@@ -22,6 +22,16 @@ function checkWound(weapon){
 	}
 };
 
+function checkSave(armor){
+	var roll = d6();
+	if (roll >= armor.save){
+		return true;
+	}
+	else{
+		return false;
+	}
+}
+
 function rollForDeath(fighter){
 		roll = d6();
 		if (fighter.wounds == 7){
@@ -41,6 +51,8 @@ function rollForDeath(fighter){
 
 //      DEFINE WEAPONS AND ARMOR      //
 
+var WEAPONS = [sword, lawnChair]
+
 function weapon(name, toHit, toWound, desc) {
 	this.name = name;
 	this.toHit = toHit;
@@ -50,6 +62,8 @@ function weapon(name, toHit, toWound, desc) {
 
 var sword = new weapon("a Sword", 3,3, "A regular old sword")
 var lawnChair = new weapon("a Lawn Chair", 2,5, "Great for relaxing")
+
+var ARMORS = [chainmail, noArmor] 
 
 function armor(name, save, desc) {
 	this.name = name;
@@ -67,8 +81,20 @@ var noArmor = new armor("No Armor", 7, "The breeze is nice")
 
 function fighter(name, weapon, armor){
 	this.name = name;
-	this.weapon = weapon;
-	this.armor = armor;
+	
+	if (weapon == undefined){
+		this.weapon = unarmed;
+	}
+	else{
+		this.weapon = weapon;
+	}
+
+	if (armor == undefined){
+		this.armor = noArmor;
+	}
+	else{
+		this.armor = armor;
+	}
 
 	this.wounds = 0;
 	this.isDead = false;
@@ -93,12 +119,16 @@ function fight(){
 	if (checkHit(fighter1.weapon)){
 		console.log("Fighter 2 is hit!");
 		if (checkWound(fighter1.weapon)){
-			console.log("Fighter 2 is wounded!");
-			console.log("Fighter 2 has " + fighter2.wounds + " wounds!");
-			fighter2.wounds++;
-			rollForDeath(fighter2);
-			if (fighter2.isDead==true){
-				console.log("Fighter 2 dies from his wounds!");
+			if(checkSave(fighter2.armor)){
+				console.log("Fighter 2's " + fighter2.armor.name + " prevents a wound!")
+			}
+			else {	
+				fighter2.wounds++;
+				console.log("Fighter 2 is wounded! He now has " + fighter2.wounds + " wounds!");
+				rollForDeath(fighter2);
+				if (fighter2.isDead==true){
+					console.log("Fighter 2 dies from his wounds!");
+				}
 			}
 		}
 	}
@@ -112,12 +142,16 @@ function fight(){
 	if (checkHit(fighter2.weapon)){
 		console.log("Fighter 1 is hit!");
 		if (checkWound(fighter2.weapon)){
-			console.log("Fighter 1 is wounded!");
-			console.log("Fighter 1 has " + fighter1.wounds + " wounds!");
-			fighter1.wounds++;
-			rollForDeath(fighter1);
-			if (fighter1.isDead==true){
-				console.log("Fighter 1 dies from his wounds!");
+			if(checkSave(fighter1.armor)){
+				console.log("Fighter 1's " + fighter1.armor.name + " prevents a wound!")
+			}
+			else {
+				fighter1.wounds++;
+				console.log("Fighter 1 is wounded! He now has " + fighter1.wounds + " wounds!");
+				rollForDeath(fighter1);
+				if (fighter1.isDead==true){
+					console.log("Fighter 1 dies from his wounds!");
+				}
 			}
 		}
 	}
