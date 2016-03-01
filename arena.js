@@ -1,6 +1,12 @@
+console.log('');
+
 function d6(){
 	return Math.floor(Math.random() * 6) + 1
 }
+
+function chooseCurrentOpponent(fighter){
+	return fighter.opponents[Math.floor(Math.random() * fighter.opponents.length)]
+};
 
 function checkHit(weapon){
 	var roll = d6();
@@ -43,9 +49,6 @@ function rollForDeath(fighter){
 		else if (fighter.wounds >= 2 && roll <= fighter.wounds - 1){
 			fighter.isDead = true;
 		}
-		else {
-			console.log("It's only a flesh wound!")
-		}
 	}
 
 
@@ -60,8 +63,9 @@ function weapon(name, toHit, toWound, desc) {
 	this.desc = desc;
 };
 
-var sword = new weapon("a Sword", 3,3, "A regular old sword")
-var lawnChair = new weapon("a Lawn Chair", 2,5, "Great for relaxing")
+var sword = new weapon("a Sword", 3,3, "A regular old sword");
+var lawnChair = new weapon("a Lawn Chair", 2,5, "Great for relaxing");
+var unArmed = new weapon("his bare hands",5,6,"This can't be good");
 
 var ARMORS = [chainmail, noArmor] 
 
@@ -71,8 +75,8 @@ function armor(name, save, desc) {
 	this.desc = desc;
 }
 
-var chainmail = new armor("Chainmail", 5, "A trusty classic")
-var noArmor = new armor("No Armor", 7, "The breeze is nice")
+var chainmail = new armor("Chainmail", 5, "A trusty classic");
+var noArmor = new armor("No Armor", 7, "The breeze is nice");
 
 
 
@@ -83,7 +87,7 @@ function fighter(name, weapon, armor){
 	this.name = name;
 	
 	if (weapon == undefined){
-		this.weapon = unarmed;
+		this.weapon = unArmed;
 	}
 	else{
 		this.weapon = weapon;
@@ -97,87 +101,141 @@ function fighter(name, weapon, armor){
 	}
 
 	this.wounds = 0;
+	this.recentlyWounded = false;
 	this.isDead = false;
+
+	this.opponents = [];
+	this.currentOpponent = undefined;
+
+	this.attack = function attack(opponent){
+		console.log(this.name + " attacks " + this.currentOpponent.name + " with " + this.weapon.name + ".");
+		if (checkHit(this.weapon)){
+			var wounded = checkWound(this.weapon);
+
+			if (!wounded){
+				console.log(this.currentOpponent.name + " is dealt a glancing blow.");
+			}
+
+			if (wounded){
+				if (checkSave(this.currentOpponent.armor)){
+					console.log(this.currentOpponent.name +"'s " + this.currentOpponent.armor.name + " prevents a wound!");
+				}
+				else{
+					this.currentOpponent.wounds++;
+					this.currentOpponent.recentlyWounded = true;
+	   			console.log(this.currentOpponent.name + " is wounded! He now has " + this.currentOpponent.wounds + " wounds!");
+				}
+			}
+		}
+		else{
+			console.log(this.name + " misses!");
+		}
+	}
 };
 
-var fighter1 = new fighter("Fighter1", sword, noArmor);
-//console.log(fighter1);
+var fighter1 = new fighter("Fighter1", sword);
 var fighter2 = new fighter("Fighter2", lawnChair, chainmail);
-//console.log(fighter2);
+var fighter3 = new fighter("Poor Bob");
 
-console.log(fighter1.name + " has " + fighter1.weapon.name + " and " + fighter1.armor.name);
-console.log(fighter2.name + " has " + fighter2.weapon.name + " and " + fighter2.armor.name);
+var FIGHTERS = [fighter1, fighter2, fighter3];
+
+
+console.log('++++++++++++++++++++');
+
+for (i=0; i<FIGHTERS.length; i++){ ////// LIST ALL in FIGHTERS array
+	console.log(FIGHTERS[i].name + " has " + FIGHTERS[i].weapon.name + " and " + FIGHTERS[i].armor.name + ".");
+};
+
+console.log('++++++++++++++++++++');
+console.log('');
+
 
 
 
 //      DEFINE THE FIGHT       //
 
-function fight(){
-
-	//      FIGHTER 1 FIGHTS!!     //
-	console.log("Fighter 1 uses his " + fighter1.weapon.name);		
-	if (checkHit(fighter1.weapon)){
-		console.log("Fighter 2 is hit!");
-		if (checkWound(fighter1.weapon)){
-			if(checkSave(fighter2.armor)){
-				console.log("Fighter 2's " + fighter2.armor.name + " prevents a wound!")
-			}
-			else {	
-				fighter2.wounds++;
-				console.log("Fighter 2 is wounded! He now has " + fighter2.wounds + " wounds!");
-				rollForDeath(fighter2);
-				if (fighter2.isDead==true){
-					console.log("Fighter 2 dies from his wounds!");
-				}
-			}
-		}
-	}
-	else{
-		console.log("Fighter 1 misses!");
-	}
-
-
-	//     FIGHTER 2 FIGHTS!!     //
-	console.log("Fighter 2 uses his " + fighter2.weapon.name);		
-	if (checkHit(fighter2.weapon)){
-		console.log("Fighter 1 is hit!");
-		if (checkWound(fighter2.weapon)){
-			if(checkSave(fighter1.armor)){
-				console.log("Fighter 1's " + fighter1.armor.name + " prevents a wound!")
-			}
-			else {
-				fighter1.wounds++;
-				console.log("Fighter 1 is wounded! He now has " + fighter1.wounds + " wounds!");
-				rollForDeath(fighter1);
-				if (fighter1.isDead==true){
-					console.log("Fighter 1 dies from his wounds!");
-				}
-			}
-		}
-	}
-	else{
-		console.log("Fighter 2 misses!");
-	}
+function fight(fighters){
 	
-	//     CHECK DEATHS      //
+	var round = 1; // i.e. Round One, etc
+	var deadFighters = 0;
 
-	if (fighter1.isDead == true && fighter2.isDead==true){
-		console.log("Both fighters have perished! ARE YOU NOT ENTERTAINED?")
-	}
-	else if (fighter1.isDead == true){
-		console.log("Fighter 2 is victorious!")
-	}
-	else if (fighter2.isDead == true){
-		console.log("Fighter 1 is victorious!")
-	}
+	function printRound(){
+		console.log('');
+		console.log('++++++++++++++++++++');
+		console.log('ROUND ' + round);
+		console.log('++++++++++++++++++++');
+		console.log('');
+	};
 
-}
+	// Define opponents for fight//
+	//
+	// NOTE: if fighters go on to fight again, you'll need to clear out their opponents array
+	//
+	for (var i=0; i<fighters.length; i++){     	 	
+		for (var j=0; j<fighters.length; j++){
+			if (i!=j){
+				fighters[i].opponents.push(fighters[j]);
+			}
+		}
+		//console.log(fighters[i]);
+	};
 
-function startFighting(){
-	console.log("The fight begins!")
-	while (fighter1.isDead==false && fighter2.isDead==false){
-		fight();
+	function fightRound(){
+		printRound();
+	// Initialize Fighter
+		for (var i=0; i<fighters.length; i++){
+
+		// Choose Opponent
+			fighters[i].currentOpponent = chooseCurrentOpponent(fighters[i]);
+			while (fighters[i].currentOpponent.isDead==true){ // if opponent is dead, keep choosing till you find a live one //
+				fighters[i].currentOpponent = chooseCurrentOpponent(fighters[i]);
+			}
+
+		// Attack Opponent
+			if (fighters[i].isDead == false){ // only attack an opponent if you are still alive
+				fighters[i].attack(fighters[i].currentOpponent);
+			}
+		}
+
+	// Check Deaths
+		for (var i=0; i<fighters.length; i++){
+			if (fighters[i].recentlyWounded == true){
+				if (fighters[i].isDead == false){ // wounded fighter only rolls for death if still alive
+					rollForDeath(fighters[i]);
+					console.log('')
+					if (fighters[i].isDead==true){
+						console.log(fighters[i].name + " dies from his wounds!");
+						deadFighters++
+					}
+					else{
+						fighters[i].recentlyWounded = false;
+						console.log(fighters[i].name + " battles on in spite of his wounds!")
+					}
+				}
+			}
+		}
+		
+	// Check for winner
+		if (deadFighters == fighters.length){
+			console.log("All fighters have perished! ARE YOU NOT ENTERTAINED?")
+			console.log('')
+		}
+		else if (deadFighters == fighters.length - 1){
+			for (var i = 0; i<fighters.length; i++){
+				if (fighters[i].isDead == false){
+					console.log(fighters[i].name + " is victorious!")
+					console.log('')
+				}
+			}
+		}
+		round++;
+	}; // end fightRound()
+
+	while (deadFighters <= fighters.length - 2){
+		fightRound();
 	}
-}
+}; // end fight()
 
-startFighting();
+
+
+fight(FIGHTERS); // BLAM! DO IT! FIGHT TO THE DEATH!
